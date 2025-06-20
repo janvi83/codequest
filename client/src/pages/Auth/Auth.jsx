@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import { UAParser } from 'ua-parser-js';
 import "./Auth.css"
 import icon from '../../assets/icon.png'
 import Aboutauth from './Aboutauth'
 import { signup, login } from '../../action/auth'
+
 const Auth = () => {
     const [issignup, setissignup] = useState(false)
     const [name, setname] = useState("");
@@ -12,32 +14,50 @@ const Auth = () => {
     const [password, setpassword] = useState("")
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const handlesubmit = (e) => {
+
+    // Optional: Get user IP address
+    const getIp = async () => {
+        try {
+            const res = await fetch('https://api.ipify.org?format=json');
+            const data = await res.json();
+            return data.ip;
+        } catch {
+            return "";
+        }
+    };
+
+    const handlesubmit = async (e) => {
         e.preventDefault();
         if (!email && !password) {
             alert("Enter email and password")
+            return;
         }
+        const parser = new UAParser();
+        const browser = parser.getBrowser().name;
+        const os = parser.getOS().name;
+        const device = parser.getDevice().type || "desktop";
+        const ip = await getIp();
+
         if (issignup) {
             if (!name) {
                 alert("Enter a name to continue")
+                return;
             }
-            dispatch(signup({ name, email, password }, navigate))
-            
+            dispatch(signup({ name, email, password, browser, os, device, ip }, navigate))
         } else {
-            dispatch(login({ email, password }, navigate))
-        
+            dispatch(login({ email, password, browser, os, device, ip }, navigate))
         }
     }
+
     const handleswitch = () => {
         setissignup(!issignup);
         setname("");
         setemail("");
         setpassword("")
-
     }
 
     return (
-        <section className="auth-section">
+                <section className="auth-section">
             {issignup && <Aboutauth />}
             <div className="auth-container-2">
                 <img src={icon} alt="icon" className='login-logo' />
@@ -85,3 +105,4 @@ const Auth = () => {
 }
 
 export default Auth
+        
